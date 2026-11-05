@@ -14,7 +14,7 @@ This repository is both a dataset template and a working template dataset. Read 
 
 - Use Node.js 22+. Run `node --test scripts/*.test.mjs` and `node scripts/validate-datapackage.mjs` before proposing changes. No dependencies are required.
 - Keep the GitHub workflow name **Validate metadata** and job/check name **metadata**; branch protection and Release Please depend on them. Keep validation separate from release management and preserve the built-in `GITHUB_TOKEN` unless the owner approves a change.
-- Release Please runs after successful validation of a push to `main`. Review generated release PRs and manually validate their branch because GitHub does not automatically trigger PR CI for `GITHUB_TOKEN`-created PRs. Do not edit generated release files except for the documented one-time reset when creating a new dataset repository.
+- Release Please runs after successful validation of a push to `main`. Review generated release PRs and manually validate their branch because GitHub does not automatically trigger PR CI for `GITHUB_TOKEN`-created PRs. Release Please updates `datapackage.json`'s `version` through the JSON `extra-files` entry in `release-please-config.json`; keep the field as a semantic-version string without a `v` prefix. Do not edit that version or generated release files except for the documented one-time reset when creating a new dataset repository (empty manifest, descriptor version `0.0.0`, and removal of the inherited changelog).
 - Use reviewed PRs and Conventional Commit squash titles. Do not merge a PR, publish a catalogue record, or publish a release without owner approval.
 
 ## Template maintenance
