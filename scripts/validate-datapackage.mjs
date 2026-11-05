@@ -1,6 +1,7 @@
 import { readFileSync, realpathSync, statSync } from 'node:fs';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { validateBuckets } from './validate-buckets.mjs';
 
 const packageName = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/;
 const resourceName = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/;
@@ -110,6 +111,9 @@ export function validateDataPackage(data, root = process.cwd()) {
       } else {
         names.add(resource.name);
       }
+      if (resource.name === 'buckets' && (resource.path !== 'buckets.csv' || (resource.format !== undefined && resource.format !== 'csv'))) {
+        errors.push('the buckets resource must reference root buckets.csv with CSV format');
+      }
       if (resource.data !== undefined || resource.path === undefined) {
         errors.push(`resource ${resource.name ?? '(unnamed)'} must reference local file path(s)`);
         continue;
@@ -122,7 +126,7 @@ export function validateDataPackage(data, root = process.cwd()) {
       for (const path of paths) validateResourcePath(path, resolve(root), errors);
     }
   }
-  return errors;
+  return [...errors, ...validateBuckets(resolve(root))];
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

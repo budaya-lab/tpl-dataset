@@ -103,6 +103,18 @@ test('rejects absolute, traversing, URL, and outside-pointing symlink paths', ()
   }
 });
 
+test('accepts ground-truth as the primary stage', () => {
+  const root = fixture();
+  try {
+    assert.deepEqual(validateDataPackage({
+      ...validPackage,
+      keywords: ['evaluation', 'stage:ground-truth'],
+    }, root), []);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('requires exactly one controlled stage keyword while allowing subject keywords', () => {
   const root = fixture();
   try {

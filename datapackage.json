@@ -1,6 +1,7 @@
 {
   "$schema": "https://datapackage.org/profiles/2.0/datapackage.json",
   "name": "example-dataset",
+  "version": "0.3.0",
   "title": "Example dataset (replace this title)",
   "description": "Replace this with a public-safe description of the dataset and its purpose.",
   "keywords": [
