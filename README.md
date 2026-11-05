@@ -11,6 +11,32 @@ Use this repository as a starting point for a dataset held in GitHub and discove
 5. Document provenance, selection criteria, annotation methods, ownership/contact, access terms, status, and how to use the data in this README. Share only details safe for the repository's audience.
 6. With Node.js 22+, run `node --test scripts/*.test.mjs` and `node scripts/validate-datapackage.mjs`. No dependency installation is needed. The GitHub Action repeats these checks on pull requests targeting `main` and pushes to `main`; it can also be run manually.
 
+### New dataset setup flow
+
+```mermaid
+flowchart TD
+    A[Create a repository from this template] --> B[Choose visibility and confirm data can be shared]
+    B --> C[Reset release state: manifest to empty, version to 0.0.0, remove inherited changelog]
+    C --> D[Replace descriptor examples: name, title, description, keywords, one stage, contributors and known metadata]
+    D --> E[Add dataset files and list each local resource in datapackage.json]
+    E --> F{Add a public bucket summary?}
+    F -- Yes --> G[Create root buckets.csv and review labels and counts for public disclosure]
+    F -- No --> H[Document provenance, methods, ownership and usage in README]
+    G --> H
+    H --> I[Run tests and datapackage validator]
+    I --> J{Checks pass?}
+    J -- No --> D
+    J -- Yes --> K[Open a pull request to main]
+    K --> L{Validate metadata check passes and changes are reviewed?}
+    L -- No --> D
+    L -- Yes --> M[Merge the reviewed dataset changes]
+    M --> N[Later: review a Release Please PR and manually validate its branch]
+    N --> O[Merge release PR to create a versioned release]
+    O --> P[Catalogue onboarding and publication remain separate human-reviewed steps]
+```
+
+The diagram is a workflow overview. Follow the numbered instructions and release guidance below for exact metadata and review requirements. A public bucket summary is optional, but its contents are public even if the repository is restricted. A GitHub release does not publish a catalogue record.
+
 ## Data Package descriptor
 
 `datapackage.json` follows the Data Package 2.0 descriptor profile. `name` is the stable machine-readable identifier; `title` is the human label. `resources` is required and lists one or more local data resources by unique name and repository-relative path. Resource paths must resolve to files inside the repository. The template requires one primary-stage keyword. `stage.config.json` is the validator's source of allowed values and their display labels: `stage:master` for source-of-record data, `stage:curated` for cleaned/transformed data, `stage:annotated` for labelled/enriched data, or `stage:ground-truth` for data for evaluating and/or fine-tuning models. If you change the allowed values, coordinate the separate portal configuration before publishing records. If a dataset underwent several steps, choose its primary stage and explain the processing in this README. This is a local keyword convention, not a Data Package field or a claim about its parent dataset. The validator checks the descriptor fields used by this template and the existence and safety of local resource paths; it also checks the contents of optional `buckets.csv` as described below. It is not a complete implementation of every Data Package rule, does not inspect other resource contents, and cannot determine whether data is safe to publish.
