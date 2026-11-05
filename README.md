@@ -17,6 +17,25 @@ Use this repository as a starting point for a dataset held in GitHub and discove
 
 New dataset repositories use `datapackage.json` as their metadata input. Package `sources[]` is for genuine upstream origins, not automatic links to portal catalogue parents. The portal's internal `derivedFrom` references are separate; stage display is implemented locally in the portal but unreviewed, and mapping reviewed upstream relationships into the portal is future work, not performed by the current onboarding. The portal's GitHub onboarding maps package `title` to its catalogue display name and derives publisher and repository links from GitHub. A public repository may have its resources linked from the catalogue after a release and human review; the portal does not copy resource bytes. A restricted repository contributes only safe metadata and a credential-free landing-page link to the public catalogue; its resource paths and files must not be exposed there. Nothing in this template automatically publishes a catalogue record.
 
+### Dataset stages and derivation
+
+```mermaid
+flowchart LR
+    masterA["Master A"] --> curatedA["Curated A"]
+    masterB["Master B"] --> curatedA["Curated A"]
+    masterB["Master B"] --> curatedB["Curated B"]
+
+    curatedA --> annotatedA["Annotated A"]
+    curatedB --> annotatedB["Annotated B"]
+    curatedB --> annotatedC["Annotated C"]
+
+    annotatedA --> gtA["Ground truth A"]
+    annotatedB --> gtA["Ground truth A"]
+    annotatedC --> gtB["Ground truth B"]
+```
+
+Arrows show possible derivations, not required steps or confirmed lineage. Each node represents an example dataset at its labelled stage. A dataset can combine multiple upstream datasets from one or more earlier stages; master collections can combine multiple source datasets. For example, a ground-truth dataset may combine master, curated, and annotated inputs. Keep one primary-stage keyword per dataset and document only verified upstream sources and processing steps.
+
 ## Releasing this template or a dataset repository
 
 The copied `release.yml` workflow works in each repository. After `Validate metadata` succeeds on a push to `main`, Release Please uses Conventional Commits to open or update a release PR when a version bump is warranted. The PR updates the release manifest, `CHANGELOG.md`, and `datapackage.json`'s `version` to the same release version. The descriptor update uses Release Please's [JSON extra-file updater](https://github.com/googleapis/release-please/blob/v17.3.0/docs/customizing.md#updating-arbitrary-json-files), configured in `release-please-config.json`; keep the `version` field as a semantic-version string without a `v` prefix. Review that PR and merge it to create the version tag and GitHub Release. Ordinary feature merges do not publish immediately; docs/chore-only changes normally do not warrant a bump. Release management ignores PR CI, failed CI, stale results, and tag pushes.
