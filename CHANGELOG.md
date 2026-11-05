@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0](https://github.com/budaya-lab/tpl-dataset/compare/v0.3.0...v0.4.0) (2026-11-05)
+
+
+### Features
+
+* **release:** sync data package version with releases ([fae9dda](https://github.com/budaya-lab/tpl-dataset/commit/fae9dda69b04cb71627987b81e49b5aceb8eda73))
+* **template:** add ground-truth stage ([9afe4aa](https://github.com/budaya-lab/tpl-dataset/commit/9afe4aa42221f2a33b0c340da4d3836a173ec1f1))
+* **template:** add stages, release versioning, and bucket validation ([ddc95dc](https://github.com/budaya-lab/tpl-dataset/commit/ddc95dcd69ed0683a4528d0d2581d7cf7034ca30))
+* **template:** validate optional bucket summaries ([df6a655](https://github.com/budaya-lab/tpl-dataset/commit/df6a655f1b881ddfb9ab7307e509420991b5b196))
+
 ## [0.3.0](https://github.com/nus-dh/tpl-dataset/compare/v0.2.0...v0.3.0) (2026-10-06)
 
 
