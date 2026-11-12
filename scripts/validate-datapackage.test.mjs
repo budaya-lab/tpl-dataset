@@ -1,10 +1,20 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+
 import { validateDataPackage } from './validate-datapackage.mjs';
 
 const stageLabels = JSON.parse(readFileSync(new URL('../stage.config.json', import.meta.url), 'utf8'));
@@ -21,6 +31,7 @@ const validPackage = {
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), 'data-package-'));
   writeFileSync(join(root, 'input.csv'), 'value\nREPLACE_WITH_REAL_DATA\n');
+
   return root;
 }
 
@@ -163,8 +174,13 @@ test('requires nonblank package titles and descriptions', () => {
       for (const value of [undefined, null, '', '   ', false, 0, {}, []]) {
         const descriptor = { ...validPackage, [field]: value };
         if (value === undefined) delete descriptor[field];
+
         const errors = validateDataPackage(descriptor, root);
-        assert.ok(errors.some((error) => error.startsWith(`${field} `)), `expected ${field} error for ${JSON.stringify(value)}`);
+
+        assert.ok(
+          errors.some((error) => error.startsWith(`${field} `)),
+          `expected ${field} error for ${JSON.stringify(value)}`
+        );
       }
     }
   } finally {
@@ -178,8 +194,13 @@ test('requires a nonblank resource title', () => {
     for (const title of [undefined, null, '', '   ', false, 0, {}, []]) {
       const resource = { ...validPackage.resources[0], title };
       if (title === undefined) delete resource.title;
+
       const errors = validateDataPackage({ ...validPackage, resources: [resource] }, root);
-      assert.ok(errors.some((error) => /resource.*title/.test(error)), `expected resource title error for ${JSON.stringify(title)}`);
+
+      assert.ok(
+        errors.some((error) => /resource.*title/.test(error)),
+        `expected resource title error for ${JSON.stringify(title)}`
+      );
     }
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -272,7 +293,11 @@ test('accepts omitted optional metadata and valid supplied metadata without fetc
       { sources: [{ title: 'Source collection', path: 'https://example.invalid/source', version: '1' }] },
       { sources: [] },
     ]) {
-      assert.deepEqual(validateDataPackage({ ...validPackage, ...optional }, root), [], JSON.stringify(optional));
+      assert.deepEqual(
+        validateDataPackage({ ...validPackage, ...optional }, root),
+        [],
+        JSON.stringify(optional)
+      );
     }
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -285,18 +310,29 @@ test('rejects malformed optional metadata when supplied', () => {
     for (const field of ['created', 'contributors', 'licenses', 'sources']) {
       for (const value of [null, false, 42, 'unknown', {}]) {
         const errors = validateDataPackage({ ...validPackage, [field]: value }, root);
-        assert.ok(errors.some((error) => error.includes(field)), `expected ${field} error for ${JSON.stringify(value)}`);
+
+        assert.ok(
+          errors.some((error) => error.includes(field)),
+          `expected ${field} error for ${JSON.stringify(value)}`
+        );
       }
     }
+
     for (const field of ['contributors', 'licenses', 'sources']) {
       for (const entry of [null, false, 42, 'unknown', [], {}]) {
         const errors = validateDataPackage({ ...validPackage, [field]: [entry] }, root);
-        assert.ok(errors.some((error) => error.includes(field)), `expected ${field} entry error for ${JSON.stringify(entry)}`);
+
+        assert.ok(
+          errors.some((error) => error.includes(field)),
+          `expected ${field} entry error for ${JSON.stringify(entry)}`
+        );
       }
     }
+
     for (const created of ['', '2026-02-30T00:00:00Z', '2026-01-02', '2026-01-02T25:00:00Z']) {
       assert.ok(validateDataPackage({ ...validPackage, created }, root).some((error) => error.includes('created')));
     }
+
     for (const field of ['contributors', 'licenses']) {
       assert.ok(validateDataPackage({ ...validPackage, [field]: [] }, root).some((error) => error.includes(field)));
     }
@@ -316,13 +352,25 @@ test('validates supplied optional entry text and contributor roles', () => {
       for (const property of properties) {
         for (const value of [null, false, 42, [], {}, '', '   ']) {
           const errors = validateDataPackage({ ...validPackage, [field]: [{ ...entry, [property]: value }] }, root);
-          assert.ok(errors.some((error) => error.includes(field)), `expected ${field}.${property} error for ${JSON.stringify(value)}`);
+
+          assert.ok(
+            errors.some((error) => error.includes(field)),
+            `expected ${field}.${property} error for ${JSON.stringify(value)}`
+          );
         }
       }
     }
+
     for (const roles of [null, 'creator', [], [null], [42], ['']]) {
-      const errors = validateDataPackage({ ...validPackage, contributors: [{ title: 'Synthetic group', roles }] }, root);
-      assert.ok(errors.some((error) => error.includes('contributors')), `expected roles error for ${JSON.stringify(roles)}`);
+      const errors = validateDataPackage({
+        ...validPackage,
+        contributors: [{ title: 'Synthetic group', roles }],
+      }, root);
+
+      assert.ok(
+        errors.some((error) => error.includes('contributors')),
+        `expected roles error for ${JSON.stringify(roles)}`
+      );
     }
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -343,23 +391,34 @@ test('requires each supplied license to identify a name or path', () => {
 test('the function and CLI leave descriptors and files unchanged on success and failure', () => {
   const root = fixture();
   const script = fileURLToPath(new URL('./validate-datapackage.mjs', import.meta.url));
+
   const freeze = (value) => {
     if (value !== null && typeof value === 'object') {
       Object.values(value).forEach(freeze);
       Object.freeze(value);
     }
+
     return value;
   };
+
   const snapshot = () => readdirSync(root, { recursive: true }).sort().map((path) => {
     const fullPath = join(root, path);
     const stat = statSync(fullPath);
-    return { path, mode: stat.mode, modified: stat.mtimeMs, contents: stat.isFile() ? readFileSync(fullPath) : null };
+
+    return {
+      path,
+      mode: stat.mode,
+      modified: stat.mtimeMs,
+      contents: stat.isFile() ? readFileSync(fullPath) : null,
+    };
   });
+
   try {
     mkdirSync(join(root, 'annotations'));
     writeFileSync(join(root, 'annotations', 'item.xml'), '<item/>');
     writeFileSync(join(root, 'README.md'), '# Handwritten\n\n<!-- notes -->\nKeep these notes.\n');
     writeFileSync(join(root, 'buckets.csv'), 'label,count\nexample,1\n');
+
     for (const invalid of [false, true]) {
       const descriptor = {
         ...structuredClone(validPackage),
@@ -370,20 +429,30 @@ test('the function and CLI leave descriptors and files unchanged on success and 
         sources: [{ title: 'Source collection', path: 'https://example.invalid/source' }],
         resources: [
           { ...validPackage.resources[0], count: 999, size: 999, bytes: 24 },
-          { name: 'annotations', title: 'Annotations', path: 'annotations/', count: 999, ...(invalid ? { format: 'dir' } : {}) },
+          {
+            name: 'annotations',
+            title: 'Annotations',
+            path: 'annotations/',
+            count: 999,
+            ...(invalid ? { format: 'dir' } : {}),
+          },
         ],
         custom: { keep: ['unchanged'] },
       };
       writeFileSync(join(root, 'datapackage.json'), JSON.stringify(descriptor, null, 2) + '\n');
       const beforeDescriptor = structuredClone(descriptor);
       const beforeFiles = snapshot();
+
       const errors = validateDataPackage(freeze(descriptor), root);
+
       assert.equal(errors.length === 0, !invalid);
       assert.deepEqual(descriptor, beforeDescriptor, 'the function must not mutate its input');
       assert.deepEqual(snapshot(), beforeFiles, 'the function must not write files');
+
       const run = () => execFileSync(process.execPath, [script], { cwd: root, encoding: 'utf8', stdio: 'pipe' });
       if (invalid) assert.throws(run, (error) => error.status === 1 && /omit format/.test(error.stderr));
       else assert.match(run(), /valid/);
+
       assert.deepEqual(snapshot(), beforeFiles, 'the CLI must not write files');
     }
   } finally {
