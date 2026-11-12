@@ -18,6 +18,19 @@ function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+function isText(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function validTextFields(entry, fields) {
+  return fields.every((field) => entry[field] === undefined || isText(entry[field]));
+}
+
+function validMetadataList(value, minItems, validEntry) {
+  return Array.isArray(value) && value.length >= minItems && value.every((entry) =>
+    isObject(entry) && Object.keys(entry).length > 0 && validEntry(entry));
+}
+
 function validDateTime(value) {
   if (typeof value !== 'string') return false;
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|([+-])(\d{2}):(\d{2}))$/.exec(value);
@@ -72,11 +85,11 @@ export function validateDataPackage(data, root = process.cwd()) {
   if (typeof data.name !== 'string' || !packageName.test(data.name)) {
     errors.push('name must be a lowercase package identifier using letters, digits, dots, underscores, or hyphens');
   }
-  if (data.title !== undefined && (typeof data.title !== 'string' || !data.title.trim())) {
-    errors.push('title must be nonempty text when provided');
+  if (!isText(data.title)) {
+    errors.push('title must be nonempty text');
   }
-  if (data.description !== undefined && typeof data.description !== 'string') {
-    errors.push('description must be text when provided');
+  if (!isText(data.description)) {
+    errors.push('description must be nonempty text');
   }
   if (data.keywords === undefined) {
     errors.push(stageRequirement);
@@ -91,14 +104,23 @@ export function validateDataPackage(data, root = process.cwd()) {
   if (data.created !== undefined && !validDateTime(data.created)) {
     errors.push('created must be an RFC 3339 date-time when provided');
   }
-  if (data.contributors !== undefined && (!Array.isArray(data.contributors) || data.contributors.some((contributor) => !isObject(contributor) || Object.keys(contributor).length === 0))) {
-    errors.push('contributors must be an array of nonempty objects when provided');
+  if (data.contributors !== undefined && !validMetadataList(data.contributors, 1, (contributor) =>
+    validTextFields(contributor, ['title', 'path', 'email', 'givenName', 'familyName', 'organization']) &&
+    (contributor.roles === undefined || (Array.isArray(contributor.roles) && contributor.roles.length > 0 && contributor.roles.every(isText)))
+  )) {
+    errors.push('contributors must be a nonempty array of nonempty objects; supplied text fields and roles must be nonblank strings, with roles in a nonempty array');
   }
-  if (data.licenses !== undefined && (!Array.isArray(data.licenses) || data.licenses.some((license) => !isObject(license) || Object.keys(license).length === 0))) {
-    errors.push('licenses must be an array of nonempty objects when provided');
+  if (data.licenses !== undefined && !validMetadataList(data.licenses, 1, (license) =>
+    validTextFields(license, ['name', 'path', 'title']) &&
+    (isText(license.name) || isText(license.path)) &&
+    (license.name === undefined || /^[A-Za-z0-9._-]+$/.test(license.name))
+  )) {
+    errors.push('licenses must be a nonempty array of objects with a license name or path; names must be identifiers and supplied fields must be nonblank text');
   }
-  if (data.sources !== undefined && (!Array.isArray(data.sources) || data.sources.some((source) => !isObject(source) || Object.keys(source).length === 0))) {
-    errors.push('sources must be an array of nonempty objects when provided');
+  if (data.sources !== undefined && !validMetadataList(data.sources, 0, (source) =>
+    validTextFields(source, ['title', 'path', 'email', 'version'])
+  )) {
+    errors.push('sources must be an array of nonempty objects with nonblank text for supplied title, path, email and version fields');
   }
   if (!Array.isArray(data.resources) || data.resources.length === 0) {
     errors.push('resources must contain at least one resource');
@@ -115,6 +137,9 @@ export function validateDataPackage(data, root = process.cwd()) {
         errors.push(`resource names must be unique: ${resource.name}`);
       } else {
         names.add(resource.name);
+      }
+      if (!isText(resource.title)) {
+        errors.push('each resource needs a nonempty title');
       }
       if (resource.count !== undefined && (!Number.isSafeInteger(resource.count) || resource.count < 0)) {
         errors.push(`resource ${resource.name ?? '(unnamed)'} count must be a non-negative safe integer`);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -15,7 +15,7 @@ const validPackage = {
   title: 'Example dataset',
   description: 'A clearly labelled placeholder package.',
   keywords: ['example', 'stage:master'],
-  resources: [{ name: 'input', path: 'input.csv', format: 'csv' }],
+  resources: [{ name: 'input', title: 'Input', path: 'input.csv', format: 'csv' }],
 };
 
 function fixture() {
@@ -41,9 +41,9 @@ test('accepts multiple resources in nested directories', () => {
     const descriptor = {
       ...validPackage,
       resources: [
-        { name: 'input', path: 'input.csv' },
-        { name: 'labels', path: 'annotations/labels.csv' },
-        { name: 'combined', path: ['input.csv', 'annotations/labels.csv'] },
+        { name: 'input', title: 'Input', path: 'input.csv' },
+        { name: 'labels', title: 'Labels', path: 'annotations/labels.csv' },
+        { name: 'combined', title: 'Combined', path: ['input.csv', 'annotations/labels.csv'] },
       ],
     };
     assert.deepEqual(validateDataPackage(descriptor, root), []);
@@ -60,7 +60,7 @@ test('accepts a directory covering nested files, with no format and an optional 
     for (const path of ['annotations', 'annotations/']) {
       const descriptor = {
         ...validPackage,
-        resources: [{ name: 'annotations', path, count: 1 }],
+        resources: [{ name: 'annotations', title: 'Annotations', path, count: 1 }],
       };
       const before = structuredClone(descriptor);
       assert.deepEqual(validateDataPackage(descriptor, root), []);
@@ -78,7 +78,7 @@ test('directory resources must omit format', () => {
     for (const format of ['dir', 'directory', 'xml', '', null]) {
       const errors = validateDataPackage({
         ...validPackage,
-        resources: [{ name: 'annotations', path: 'annotations/', format }],
+        resources: [{ name: 'annotations', title: 'Annotations', path: 'annotations/', format }],
       }, root);
       assert.ok(errors.some((error) => error.includes('omit format')), `expected format rejection: ${format}`);
     }
@@ -93,13 +93,13 @@ test('validates optional resource counts as non-negative safe integers', () => {
     for (const count of [0, 1, Number.MAX_SAFE_INTEGER]) {
       assert.deepEqual(validateDataPackage({
         ...validPackage,
-        resources: [{ name: 'input', path: 'input.csv', count }],
+        resources: [{ ...validPackage.resources[0], count }],
       }, root), []);
     }
     for (const count of [-1, 1.5, '1', true, null, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
       const errors = validateDataPackage({
         ...validPackage,
-        resources: [{ name: 'input', path: 'input.csv', count }],
+        resources: [{ ...validPackage.resources[0], count }],
       }, root);
       assert.ok(errors.some((error) => error.includes('count')), `expected count rejection: ${count}`);
     }
@@ -115,7 +115,7 @@ test('rejects unsafe directory paths and trailing slashes on files', () => {
     for (const path of ['', '.', './', '../', 'annotations//', 'annotations/../', 'annotations/./', 'gone/', 'input.csv/']) {
       assert.notDeepEqual(validateDataPackage({
         ...validPackage,
-        resources: [{ name: 'input', path }],
+        resources: [{ ...validPackage.resources[0], path }],
       }, root), [], `expected path rejection: ${path}`);
     }
   } finally {
@@ -131,7 +131,7 @@ test('rejects directory symlinks and symlinked parents that resolve outside the 
     for (const path of ['escape', 'escape/', 'escape/input.csv']) {
       const errors = validateDataPackage({
         ...validPackage,
-        resources: [{ name: 'input', path }],
+        resources: [{ ...validPackage.resources[0], path }],
       }, root);
       assert.ok(errors.some((error) => error.includes('outside')), `expected escape rejection: ${path}`);
     }
@@ -141,7 +141,7 @@ test('rejects directory symlinks and symlinked parents that resolve outside the 
   }
 });
 
-test('requires a package name and at least one resource; validates an optional title', () => {
+test('requires a package name and at least one resource', () => {
   const root = fixture();
   try {
     for (const descriptor of [
@@ -156,15 +156,45 @@ test('requires a package name and at least one resource; validates an optional t
   }
 });
 
+test('requires nonblank package titles and descriptions', () => {
+  const root = fixture();
+  try {
+    for (const field of ['title', 'description']) {
+      for (const value of [undefined, null, '', '   ', false, 0, {}, []]) {
+        const descriptor = { ...validPackage, [field]: value };
+        if (value === undefined) delete descriptor[field];
+        const errors = validateDataPackage(descriptor, root);
+        assert.ok(errors.some((error) => error.startsWith(`${field} `)), `expected ${field} error for ${JSON.stringify(value)}`);
+      }
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('requires a nonblank resource title', () => {
+  const root = fixture();
+  try {
+    for (const title of [undefined, null, '', '   ', false, 0, {}, []]) {
+      const resource = { ...validPackage.resources[0], title };
+      if (title === undefined) delete resource.title;
+      const errors = validateDataPackage({ ...validPackage, resources: [resource] }, root);
+      assert.ok(errors.some((error) => /resource.*title/.test(error)), `expected resource title error for ${JSON.stringify(title)}`);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('rejects malformed and duplicate resources', () => {
   const root = fixture();
   try {
     for (const resources of [
-      [{ path: 'input.csv' }],
-      [{ name: 'input', path: 'input.csv' }, { name: 'input', path: 'input.csv' }],
-      [{ name: 'input', path: 'missing.csv' }],
-      [{ name: 'input', path: ['input.csv', 'missing.csv'] }],
-      [{ name: 'input', data: ['inline'] }],
+      [{ title: 'Input', path: 'input.csv' }],
+      [validPackage.resources[0], validPackage.resources[0]],
+      [{ ...validPackage.resources[0], path: 'missing.csv' }],
+      [{ ...validPackage.resources[0], path: ['input.csv', 'missing.csv'] }],
+      [{ name: 'input', title: 'Input', data: ['inline'] }],
     ]) {
       assert.notDeepEqual(validateDataPackage({ ...validPackage, resources }, root), []);
     }
@@ -182,7 +212,7 @@ test('rejects absolute, traversing, URL, and outside-pointing symlink paths', ()
     for (const path of ['/etc/passwd', '../outside-dataset-resource.csv', 'https://example.test/data.csv', 'outside.csv']) {
       const errors = validateDataPackage({
         ...validPackage,
-        resources: [{ name: 'input', path }],
+        resources: [{ ...validPackage.resources[0], path }],
       }, root);
       assert.notDeepEqual(errors, [], `expected unsafe path to fail: ${path}`);
     }
@@ -229,23 +259,133 @@ test('requires exactly one controlled stage keyword while allowing subject keywo
   }
 });
 
-test('validates optional Data Package fields without requiring them', () => {
+test('accepts omitted optional metadata and valid supplied metadata without fetching references', () => {
   const root = fixture();
   try {
-    assert.deepEqual(validateDataPackage({
-      ...validPackage,
-      created: '2026-01-02T03:04:05Z',
-      contributors: [{ title: 'Research group', roles: ['creator'] }],
-      licenses: [{ name: 'CC-BY-4.0' }],
-      sources: [{ title: 'Source collection' }],
-    }, root), []);
-    assert.deepEqual(validateDataPackage(validPackage, root), []);
-    assert.notDeepEqual(validateDataPackage({ ...validPackage, created: 'yesterday' }, root), []);
-    assert.notDeepEqual(validateDataPackage({ ...validPackage, created: '2026-02-30T00:00:00Z' }, root), []);
-    assert.notDeepEqual(validateDataPackage({ ...validPackage, contributors: 'unknown' }, root), []);
-    assert.notDeepEqual(validateDataPackage({ ...validPackage, contributors: [{}] }, root), []);
-    assert.notDeepEqual(validateDataPackage({ ...validPackage, licenses: ['CC-BY-4.0'] }, root), []);
-    assert.notDeepEqual(validateDataPackage({ ...validPackage, sources: [null] }, root), []);
+    for (const optional of [
+      {},
+      { created: '2026-01-02T03:04:05.123+08:00' },
+      { contributors: [{ title: 'Synthetic group', roles: ['creator', 'curator'] }] },
+      { contributors: [{ organization: 'Synthetic group' }] },
+      { licenses: [{ name: 'CC-BY-4.0', title: 'Attribution' }] },
+      { licenses: [{ path: 'LICENSE-not-present.txt' }] },
+      { sources: [{ title: 'Source collection', path: 'https://example.invalid/source', version: '1' }] },
+      { sources: [] },
+    ]) {
+      assert.deepEqual(validateDataPackage({ ...validPackage, ...optional }, root), [], JSON.stringify(optional));
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('rejects malformed optional metadata when supplied', () => {
+  const root = fixture();
+  try {
+    for (const field of ['created', 'contributors', 'licenses', 'sources']) {
+      for (const value of [null, false, 42, 'unknown', {}]) {
+        const errors = validateDataPackage({ ...validPackage, [field]: value }, root);
+        assert.ok(errors.some((error) => error.includes(field)), `expected ${field} error for ${JSON.stringify(value)}`);
+      }
+    }
+    for (const field of ['contributors', 'licenses', 'sources']) {
+      for (const entry of [null, false, 42, 'unknown', [], {}]) {
+        const errors = validateDataPackage({ ...validPackage, [field]: [entry] }, root);
+        assert.ok(errors.some((error) => error.includes(field)), `expected ${field} entry error for ${JSON.stringify(entry)}`);
+      }
+    }
+    for (const created of ['', '2026-02-30T00:00:00Z', '2026-01-02', '2026-01-02T25:00:00Z']) {
+      assert.ok(validateDataPackage({ ...validPackage, created }, root).some((error) => error.includes('created')));
+    }
+    for (const field of ['contributors', 'licenses']) {
+      assert.ok(validateDataPackage({ ...validPackage, [field]: [] }, root).some((error) => error.includes(field)));
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('validates supplied optional entry text and contributor roles', () => {
+  const root = fixture();
+  try {
+    for (const [field, properties, entry] of [
+      ['contributors', ['title', 'path', 'email', 'givenName', 'familyName', 'organization'], { title: 'Synthetic group' }],
+      ['licenses', ['name', 'path', 'title'], { name: 'CC-BY-4.0' }],
+      ['sources', ['title', 'path', 'email', 'version'], { title: 'Source collection' }],
+    ]) {
+      for (const property of properties) {
+        for (const value of [null, false, 42, [], {}, '', '   ']) {
+          const errors = validateDataPackage({ ...validPackage, [field]: [{ ...entry, [property]: value }] }, root);
+          assert.ok(errors.some((error) => error.includes(field)), `expected ${field}.${property} error for ${JSON.stringify(value)}`);
+        }
+      }
+    }
+    for (const roles of [null, 'creator', [], [null], [42], ['']]) {
+      const errors = validateDataPackage({ ...validPackage, contributors: [{ title: 'Synthetic group', roles }] }, root);
+      assert.ok(errors.some((error) => error.includes('contributors')), `expected roles error for ${JSON.stringify(roles)}`);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('requires each supplied license to identify a name or path', () => {
+  const root = fixture();
+  try {
+    for (const license of [{ title: 'Unidentified license' }, { name: 'not a license identifier' }]) {
+      assert.ok(validateDataPackage({ ...validPackage, licenses: [license] }, root).some((error) => error.includes('licenses')));
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('the function and CLI leave descriptors and files unchanged on success and failure', () => {
+  const root = fixture();
+  const script = fileURLToPath(new URL('./validate-datapackage.mjs', import.meta.url));
+  const freeze = (value) => {
+    if (value !== null && typeof value === 'object') {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  const snapshot = () => readdirSync(root, { recursive: true }).sort().map((path) => {
+    const fullPath = join(root, path);
+    const stat = statSync(fullPath);
+    return { path, mode: stat.mode, modified: stat.mtimeMs, contents: stat.isFile() ? readFileSync(fullPath) : null };
+  });
+  try {
+    mkdirSync(join(root, 'annotations'));
+    writeFileSync(join(root, 'annotations', 'item.xml'), '<item/>');
+    writeFileSync(join(root, 'README.md'), '# Handwritten\n\n<!-- notes -->\nKeep these notes.\n');
+    writeFileSync(join(root, 'buckets.csv'), 'label,count\nexample,1\n');
+    for (const invalid of [false, true]) {
+      const descriptor = {
+        ...structuredClone(validPackage),
+        title: ' Example dataset ',
+        created: '2026-01-02T03:04:05Z',
+        contributors: [{ title: 'Synthetic group', roles: ['creator'] }],
+        licenses: [{ name: 'CC-BY-4.0' }],
+        sources: [{ title: 'Source collection', path: 'https://example.invalid/source' }],
+        resources: [
+          { ...validPackage.resources[0], count: 999, size: 999, bytes: 24 },
+          { name: 'annotations', title: 'Annotations', path: 'annotations/', count: 999, ...(invalid ? { format: 'dir' } : {}) },
+        ],
+        custom: { keep: ['unchanged'] },
+      };
+      writeFileSync(join(root, 'datapackage.json'), JSON.stringify(descriptor, null, 2) + '\n');
+      const beforeDescriptor = structuredClone(descriptor);
+      const beforeFiles = snapshot();
+      const errors = validateDataPackage(freeze(descriptor), root);
+      assert.equal(errors.length === 0, !invalid);
+      assert.deepEqual(descriptor, beforeDescriptor, 'the function must not mutate its input');
+      assert.deepEqual(snapshot(), beforeFiles, 'the function must not write files');
+      const run = () => execFileSync(process.execPath, [script], { cwd: root, encoding: 'utf8', stdio: 'pipe' });
+      if (invalid) assert.throws(run, (error) => error.status === 1 && /omit format/.test(error.stderr));
+      else assert.match(run(), /valid/);
+      assert.deepEqual(snapshot(), beforeFiles, 'the CLI must not write files');
+    }
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

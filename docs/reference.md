@@ -8,14 +8,26 @@
 
 | Field | Rule |
 | --- | --- |
-| `name` | Stable lowercase package identifier. |
-| `title` | Human-readable dataset title. |
-| `resources` | One or more resources with unique names and local, repository-relative file or directory paths. Paths must resolve inside the repository. |
+| `name` | Required stable lowercase package identifier. |
+| `title`, `description` | Required nonblank text. |
+| `resources` | Required nonempty array. Each resource needs a unique lowercase `name`, nonblank `title` and local, repository-relative file or directory `path`. Paths must resolve inside the repository. |
 | `keywords` | Exactly one `stage:` keyword; other keywords describe the subject. |
-| `created` | Accurate RFC 3339 date-time, or omit if unknown. |
-| `contributors` | Actual people or organizations and their Data Package contributor roles, or omit if unknown. |
-| `licenses`, `sources` | Include only verified, safe-to-publish licences and upstream origins. |
+| `created` | Optional RFC 3339 date-time, including timezone offsets and fractional seconds. Omit if unknown. |
+| `contributors` | Optional nonempty array of nonempty objects. Supplied `roles` must be a nonempty array of nonblank strings. |
+| `licenses` | Optional nonempty array of objects, each with a nonblank `name` or `path`. Names use letters, digits, dots, underscores or hyphens. |
+| `sources` | Optional array of nonempty objects; an empty array is allowed. |
 | `version` | Semantic-version string without a `v` prefix. Managed by Release Please after the initial reset. |
+
+Optional does not mean unchecked: supplied values must satisfy the rules above.
+Known text fields in contributor, licence and source entries must be nonblank strings.
+Metadata paths are references: validation does not open or fetch them. These checks do
+not verify licence authority, source availability, full Data Package conformance or
+permission to publish. Include only accurate, public-safe metadata; omit unknown values.
+
+Validation never changes files or the supplied descriptor. Counting, repairs and README
+generation belong to downstream tools. Descriptors missing the newly required package
+`title`/`description` or resource `title` will fail; add accurate descriptions before
+validating again. Existing dataset repositories are not updated automatically.
 
 Choose the dataset's **primary stage**, not a required sequence:
 

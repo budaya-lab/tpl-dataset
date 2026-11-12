@@ -49,7 +49,10 @@ test('the reserved buckets resource must refer to the root CSV', () => {
       { name: 'buckets', path: 'input.csv', format: 'csv' },
       { name: 'buckets', path: 'buckets.csv', format: 'json' },
     ]) {
-      assert.ok(validateDataPackage({ name: 'example', keywords: ['stage:master'], resources: [resource] }, root).some((error) => error.includes('buckets')));
+      assert.ok(validateDataPackage({
+        name: 'example', title: 'Example', description: 'Synthetic example.',
+        keywords: ['stage:master'], resources: [{ ...resource, title: 'Summary' }],
+      }, root).some((error) => error.includes('buckets')));
     }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
@@ -61,7 +64,8 @@ test('CLI validates optional root buckets even when not declared as a resource',
   try {
     writeFileSync(join(root, 'input.csv'), 'value\nexample\n');
     writeFileSync(join(root, 'datapackage.json'), JSON.stringify({
-      name: 'example', keywords: ['stage:master'], resources: [{ name: 'input', path: 'input.csv' }],
+      name: 'example', title: 'Example', description: 'Synthetic example.',
+      keywords: ['stage:master'], resources: [{ name: 'input', title: 'Input', path: 'input.csv' }],
     }));
     assert.match(run(), /valid/);
     writeFileSync(join(root, 'buckets.csv'), 'year,count\n001,0\n');
