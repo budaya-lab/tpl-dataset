@@ -30,12 +30,12 @@ function validDateTime(value) {
     (offsetHour === undefined || (Number(offsetHour) <= 23 && Number(offsetMinute) <= 59));
 }
 
-function validateResourcePath(path, root, errors) {
+function validateResourcePath(path, root, errors, format) {
   if (typeof path !== 'string' || path.length === 0 || path.includes('\\') || isAbsolute(path)) {
     errors.push('resource paths must be nonempty relative POSIX paths');
     return;
   }
-  const segments = path.split('/');
+  const segments = (path.endsWith('/') ? path.slice(0, -1) : path).split('/');
   if (segments.some((segment) => !segment || segment === '.' || segment === '..')) {
     errors.push(`unsafe resource path: ${path}`);
     return;
@@ -54,9 +54,14 @@ function validateResourcePath(path, root, errors) {
       errors.push(`resource path resolves outside the repository: ${path}`);
       return;
     }
-    if (!statSync(realFile).isFile()) errors.push(`resource path is not a file: ${path}`);
+    const stat = statSync(realFile);
+    if (stat.isDirectory()) {
+      if (format !== undefined) errors.push(`directory resources must omit format: ${path}`);
+    } else if (!stat.isFile() || path.endsWith('/')) {
+      errors.push(`resource path must reference a file or directory without a trailing slash on files: ${path}`);
+    }
   } catch {
-    errors.push(`resource file does not exist: ${path}`);
+    errors.push(`resource path does not exist: ${path}`);
   }
 }
 
@@ -111,6 +116,9 @@ export function validateDataPackage(data, root = process.cwd()) {
       } else {
         names.add(resource.name);
       }
+      if (resource.count !== undefined && (!Number.isSafeInteger(resource.count) || resource.count < 0)) {
+        errors.push(`resource ${resource.name ?? '(unnamed)'} count must be a non-negative safe integer`);
+      }
       if (resource.name === 'buckets' && (resource.path !== 'buckets.csv' || (resource.format !== undefined && resource.format !== 'csv'))) {
         errors.push('the buckets resource must reference root buckets.csv with CSV format');
       }
@@ -123,7 +131,7 @@ export function validateDataPackage(data, root = process.cwd()) {
         errors.push(`resource ${resource.name ?? '(unnamed)'} must include at least one path`);
         continue;
       }
-      for (const path of paths) validateResourcePath(path, resolve(root), errors);
+      for (const path of paths) validateResourcePath(path, resolve(root), errors, resource.format);
     }
   }
   return [...errors, ...validateBuckets(resolve(root))];

@@ -10,7 +10,7 @@
 | --- | --- |
 | `name` | Stable lowercase package identifier. |
 | `title` | Human-readable dataset title. |
-| `resources` | One or more resources with unique names and local, repository-relative file paths. Paths must resolve inside the repository. |
+| `resources` | One or more resources with unique names and local, repository-relative file or directory paths. Paths must resolve inside the repository. |
 | `keywords` | Exactly one `stage:` keyword; other keywords describe the subject. |
 | `created` | Accurate RFC 3339 date-time, or omit if unknown. |
 | `contributors` | Actual people or organizations and their Data Package contributor roles, or omit if unknown. |
@@ -46,6 +46,31 @@ flowchart LR
 Arrows show possible derivations, not required steps or confirmed lineage. A dataset may combine several inputs or processing steps. Document only verified sources and methods; a stage does not establish lineage. Data Package `sources[]` and the portal's `derivedFrom` catalogue links are separate. Onboarding does not infer parent links.
 
 [`stage.config.json`](../stage.config.json) defines allowed stages and display labels. Coordinate changes with the portal configuration before publishing records.
+
+## Resource counts and directories
+
+Use `resources[].count` for item totals, not storage size. It is an optional integer from `0` to `9007199254740991`. Omit unknown or unsupported counts; `0` means empty.
+
+| Resource | `count` means |
+| --- | --- |
+| CSV | Data rows, excluding the header. |
+| JSON | Top-level array items or object members. |
+| Directory | Files recursively, excluding hidden files and hidden directories. |
+
+Dataset Steward recomputes counts for these single-path resources. Template validation checks the declared count's type and range, not its accuracy. Multi-path resources and other file types have no computed count. Do not sum resource counts into a dataset total: a CSV and a directory may describe the same items.
+
+A directory resource covers its contents without listing every file. Prefer a trailing slash and **omit `format`**, rather than using `dir` or `directory`. Synthetic example:
+
+```json
+{
+  "name": "annotations",
+  "title": "Annotations",
+  "path": "annotations/",
+  "count": 120
+}
+```
+
+Directory paths and `count` are lab extensions. Standard Data Package [`format`](https://datapackage.org/standard/data-resource/#format) describes a file format such as `csv`; [`bytes`](https://datapackage.org/standard/data-resource/#bytes) records storage size. Directory validation checks the referenced path, not every file inside it. Portal onboarding remains subject to its own resource rules; this does not automatically publish directory contents.
 
 ## Dataset Steward
 

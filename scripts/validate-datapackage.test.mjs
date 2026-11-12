@@ -52,6 +52,95 @@ test('accepts multiple resources in nested directories', () => {
   }
 });
 
+test('accepts a directory covering nested files, with no format and an optional trailing slash', () => {
+  const root = fixture();
+  try {
+    mkdirSync(join(root, 'annotations', 'nested'), { recursive: true });
+    writeFileSync(join(root, 'annotations', 'nested', 'label.xml'), '<item/>');
+    for (const path of ['annotations', 'annotations/']) {
+      const descriptor = {
+        ...validPackage,
+        resources: [{ name: 'annotations', path, count: 1 }],
+      };
+      const before = structuredClone(descriptor);
+      assert.deepEqual(validateDataPackage(descriptor, root), []);
+      assert.deepEqual(descriptor, before, 'validation must not rewrite metadata');
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('directory resources must omit format', () => {
+  const root = fixture();
+  try {
+    mkdirSync(join(root, 'annotations'));
+    for (const format of ['dir', 'directory', 'xml', '', null]) {
+      const errors = validateDataPackage({
+        ...validPackage,
+        resources: [{ name: 'annotations', path: 'annotations/', format }],
+      }, root);
+      assert.ok(errors.some((error) => error.includes('omit format')), `expected format rejection: ${format}`);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('validates optional resource counts as non-negative safe integers', () => {
+  const root = fixture();
+  try {
+    for (const count of [0, 1, Number.MAX_SAFE_INTEGER]) {
+      assert.deepEqual(validateDataPackage({
+        ...validPackage,
+        resources: [{ name: 'input', path: 'input.csv', count }],
+      }, root), []);
+    }
+    for (const count of [-1, 1.5, '1', true, null, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+      const errors = validateDataPackage({
+        ...validPackage,
+        resources: [{ name: 'input', path: 'input.csv', count }],
+      }, root);
+      assert.ok(errors.some((error) => error.includes('count')), `expected count rejection: ${count}`);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('rejects unsafe directory paths and trailing slashes on files', () => {
+  const root = fixture();
+  try {
+    mkdirSync(join(root, 'annotations'));
+    for (const path of ['', '.', './', '../', 'annotations//', 'annotations/../', 'annotations/./', 'gone/', 'input.csv/']) {
+      assert.notDeepEqual(validateDataPackage({
+        ...validPackage,
+        resources: [{ name: 'input', path }],
+      }, root), [], `expected path rejection: ${path}`);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('rejects directory symlinks and symlinked parents that resolve outside the repository', () => {
+  const root = fixture();
+  const outside = fixture();
+  try {
+    symlinkSync(outside, join(root, 'escape'));
+    for (const path of ['escape', 'escape/', 'escape/input.csv']) {
+      const errors = validateDataPackage({
+        ...validPackage,
+        resources: [{ name: 'input', path }],
+      }, root);
+      assert.ok(errors.some((error) => error.includes('outside')), `expected escape rejection: ${path}`);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  }
+});
+
 test('requires a package name and at least one resource; validates an optional title', () => {
   const root = fixture();
   try {
