@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/budaya-lab/tpl-dataset/compare/v0.4.0...v0.5.0) (2026-11-12)
+
+
+### Features
+
+* **template:** support resource counts and directories ([de61a53](https://github.com/budaya-lab/tpl-dataset/commit/de61a53ad91b4a3be76cfa272adf06980a7c2e06))
+* **template:** support resource counts and directories ([dd086f8](https://github.com/budaya-lab/tpl-dataset/commit/dd086f89554a4061419aeead19ee0a6d17a914f5))
+
 ## [0.4.0](https://github.com/budaya-lab/tpl-dataset/compare/v0.3.0...v0.4.0) (2026-11-05)
 
 
