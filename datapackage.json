@@ -24,6 +24,7 @@
       "name": "input",
       "path": "input.csv",
       "format": "csv",
+      "count": 1,
       "title": "Placeholder data (replace this resource)"
     }
   ]
