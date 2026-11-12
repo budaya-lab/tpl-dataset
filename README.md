@@ -19,8 +19,8 @@ flowchart LR
 
 1. Choose **Use this template → Create a new repository** in GitHub. Suggested name: `ds-<task>-<user>`. Avoid sensitive identifiers. Choose visibility after checking consent, permissions, licensing and file size.
 2. Reset inherited release state: set `.release-please-manifest.json` to `{}`, set `datapackage.json`'s `version` to `"0.0.0"`, and remove `CHANGELOG.md`.
-3. Replace `input.csv` with your data. List each file or directory resource in `datapackage.json` with a unique `name` and a repository-relative path. A directory covers its contents; omit its `format`. Use optional `count` for item totals, not bytes. See [resource rules](docs/reference.md#resource-counts-and-directories).
-4. Replace the package `name` (stable lowercase identifier), `title`, `description` and subject `keywords`. Keep exactly one stage keyword: `stage:master`, `stage:curated`, `stage:annotated` or `stage:ground-truth`. See [metadata and stage rules](docs/reference.md#metadata-and-stages).
+3. Replace `input.csv` with your data. List each file or directory resource in `datapackage.json` with a unique `name`, a nonblank `title` and a repository-relative `path`. A directory covers its contents; omit its `format`. Use optional `count` for item totals, not bytes. See [resource rules](docs/reference.md#resource-counts-and-directories).
+4. Replace the package `name` (stable lowercase identifier), `title`, `description` and subject `keywords`. Both `title` and `description` are required, nonblank text. Keep exactly one stage keyword: `stage:master`, `stage:curated`, `stage:annotated` or `stage:ground-truth`. See [metadata and stage rules](docs/reference.md#metadata-and-stages).
 5. Replace the example `created` date and `contributors`, or remove them if unknown. Add licences and upstream sources only when available and safe to share. Do not invent metadata or lineage.
 
 ## 3. Describe the dataset
@@ -63,6 +63,6 @@ node --test scripts/*.test.mjs
 node scripts/validate-datapackage.mjs
 ```
 
-Fix errors, then open a PR to `main`. Require review and the **Validate metadata** check (`metadata`) before merging. Validation checks selected metadata, local paths and optional bucket summaries—not full Data Package conformance, other data contents or permission to publish.
+Fix errors, then open a PR to `main`. Require review and the **Validate metadata** check (`metadata`) before merging. Validation is read-only: it never changes files or the supplied descriptor. It checks required metadata, supplied optional metadata, local paths and optional bucket summaries—not full Data Package conformance, other data contents or permission to publish.
 
 For a versioned release, follow the [release guide](docs/reference.md#releases). Then follow the [Data Portal onboarding guide](https://github.com/budaya-lab/data-portal#add-a-dataset) to review and add a catalogue record. **A GitHub release does not automatically publish a catalogue entry.**

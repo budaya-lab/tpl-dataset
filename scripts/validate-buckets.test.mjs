@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+
 import { parseBuckets } from './validate-buckets.mjs';
 import { validateDataPackage } from './validate-datapackage.mjs';
 
@@ -42,39 +43,59 @@ test('rejects invalid UTF-8 and oversized bucket contents', () => {
 
 test('the reserved buckets resource must refer to the root CSV', () => {
   const root = mkdtempSync(join(tmpdir(), 'bucket-resource-'));
+
   try {
     writeFileSync(join(root, 'input.csv'), 'value\nexample\n');
     writeFileSync(join(root, 'buckets.csv'), 'label,count\nexample,0\n');
+
     for (const resource of [
       { name: 'buckets', path: 'input.csv', format: 'csv' },
       { name: 'buckets', path: 'buckets.csv', format: 'json' },
     ]) {
-      assert.ok(validateDataPackage({ name: 'example', keywords: ['stage:master'], resources: [resource] }, root).some((error) => error.includes('buckets')));
+      assert.ok(validateDataPackage({
+        name: 'example',
+        title: 'Example',
+        description: 'Synthetic example.',
+        keywords: ['stage:master'],
+        resources: [{ ...resource, title: 'Summary' }],
+      }, root).some((error) => error.includes('buckets')));
     }
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('CLI validates optional root buckets even when not declared as a resource', () => {
   const root = mkdtempSync(join(tmpdir(), 'bucket-cli-'));
   const script = fileURLToPath(new URL('./validate-datapackage.mjs', import.meta.url));
   const run = () => execFileSync(process.execPath, [script], { cwd: root, encoding: 'utf8', stdio: 'pipe' });
+
   try {
     writeFileSync(join(root, 'input.csv'), 'value\nexample\n');
     writeFileSync(join(root, 'datapackage.json'), JSON.stringify({
-      name: 'example', keywords: ['stage:master'], resources: [{ name: 'input', path: 'input.csv' }],
+      name: 'example',
+      title: 'Example',
+      description: 'Synthetic example.',
+      keywords: ['stage:master'],
+      resources: [{ name: 'input', title: 'Input', path: 'input.csv' }],
     }));
     assert.match(run(), /valid/);
+
     writeFileSync(join(root, 'buckets.csv'), 'year,count\n001,0\n');
     assert.match(run(), /valid/);
+
     writeFileSync(join(root, 'buckets.csv'), 'year,count\nprivate-label,-1\n');
     assert.throws(run, (error) => {
       assert.match(error.stderr.toString(), /buckets\.csv.*row 2/);
       assert.doesNotMatch(error.stderr.toString(), /private-label/);
+
       return true;
     });
+
     rmSync(join(root, 'buckets.csv'));
     mkdirSync(join(root, 'buckets.csv'));
     assert.throws(run);
+
     rmSync(join(root, 'buckets.csv'), { recursive: true });
     symlinkSync(join(root, 'input.csv'), join(root, 'buckets.csv'));
     assert.throws(run);
