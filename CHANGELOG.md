@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/budaya-lab/tpl-dataset/compare/v0.5.0...v1.0.0) (2026-11-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **validation:** package title and description and resource titles must be nonblank. Supplied contributors and licenses must be nonempty arrays with valid entry fields; licenses need a name or path.
+
+### Features
+
+* **validation:** require descriptive dataset metadata ([5afee92](https://github.com/budaya-lab/tpl-dataset/commit/5afee92057929426bafb85a0c6b8a6773813cdac))
+* **validation:** tighten read-only metadata checks ([73bc8d3](https://github.com/budaya-lab/tpl-dataset/commit/73bc8d3528637c3978129609486b5ee6e948a140))
+
 ## [0.5.0](https://github.com/budaya-lab/tpl-dataset/compare/v0.4.0...v0.5.0) (2026-11-12)
 
 
