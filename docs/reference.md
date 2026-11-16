@@ -158,7 +158,7 @@ repository and run this at its root, before making new commits:
 pnpm init:dataset
 ```
 
-This manual command needs Node.js 24+, the pinned pnpm and Git, but no dependency
+This manual command needs Node.js 24+, pnpm 12.x and Git, but no dependency
 installation. It empties `.release-please-manifest.json`, changes only the root
 `datapackage.json` version to `"0.0.0"`, and removes the inherited `CHANGELOG.md`.
 Other descriptor bytes, data, README notes, Git commits and remotes stay unchanged.
