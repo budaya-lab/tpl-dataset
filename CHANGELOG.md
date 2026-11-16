@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.0](https://github.com/budaya-lab/tpl-dataset/compare/v1.0.0...v2.0.0) (2026-11-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* **validation:** use released lazydata validator
+
+### Features
+
+* **setup:** add manual dataset initialization ([dc7fb48](https://github.com/budaya-lab/tpl-dataset/commit/dc7fb483535298a372c80dfc5e4f684e1ad95ea3))
+* **validation:** use released lazydata validator ([46cf8d5](https://github.com/budaya-lab/tpl-dataset/commit/46cf8d59fba30dc9008803f858e7c6999252ae6b))
+
 ## [1.0.0](https://github.com/budaya-lab/tpl-dataset/compare/v0.5.0...v1.0.0) (2026-11-12)
 
 
