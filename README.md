@@ -13,8 +13,9 @@ Search the [Budaya Lab Data Portal](https://data.budaya-lab.org/) first. Follow 
 ```mermaid
 flowchart LR
     A[Create repository] --> B[Describe dataset]
-    B --> C[Validate]
-    C --> D[Submit for review]
+    B --> C[Keep preparation code]
+    C --> D[Validate]
+    D --> E[Submit for review]
 ```
 
 1. Choose **Use this template → Create a new repository** in GitHub. Suggested name: `ds-<task>-<user>`. Avoid sensitive identifiers. Choose visibility after checking consent, permissions, licensing and file size.
@@ -54,7 +55,13 @@ Add this entry to `datapackage.json`'s `resources`:
 
 CI checks `buckets.csv` whenever present, even if undeclared. Portal onboarding copies the summary only from a suitable published release and after confirmed apply. Copied summaries are public even for draft catalogue records. See [full format limits and import rules](docs/reference.md#optional-public-bucket-summary).
 
-## 4. Validate, release and catalogue
+## 4. Add preparation code
+
+Include any scripts or notebooks used to clean, transform or prepare the dataset.
+Document how to run them, their dependencies, and their input/output files.
+Remove credentials, private paths and sensitive notebook outputs before sharing.
+
+## 5. Validate, release and catalogue
 
 With Node.js 22+, run from the repository root. No dependencies are needed.
 
