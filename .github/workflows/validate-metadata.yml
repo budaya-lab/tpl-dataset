@@ -15,10 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-      - name: Test validator
-        run: node --test scripts/*.test.mjs
+          node-version: "24"
+          cache: pnpm
+      - name: Install pinned validator and test tools
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Typecheck tests
+        run: pnpm typecheck
+      - name: Test validator integration
+        run: pnpm test
       - name: Validate Data Package
-        run: node scripts/validate-datapackage.mjs
+        run: pnpm validate
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high

@@ -8,6 +8,8 @@
     "replace",
     "these",
     "keywords",
+    "task:replace-me",
+    "project:replace-me",
     "stage:master"
   ],
   "created": "2000-01-01T00:00:00Z",
