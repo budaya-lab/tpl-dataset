@@ -19,7 +19,7 @@ flowchart LR
 ```
 
 1. Choose **Use this template → Create a new repository** in GitHub. Suggested name: `ds-<task>-<user>`. Avoid sensitive identifiers. Choose visibility after checking consent, permissions, licensing and file size.
-2. Clone the new repository fully. With Node.js 24+ and pnpm 12.11.2, run `pnpm init:dataset` at its root before making new commits. This clears the inherited release manifest, sets the dataset version to `"0.0.0"` and removes the inherited changelog. It does not edit other metadata or data. See [cleanup safeguards](docs/reference.md#initialize-a-new-dataset).
+2. Clone the new repository fully. With Node.js 24+ and pnpm 12.x, run `pnpm init:dataset` at its root before making new commits. This clears the inherited release manifest, sets the dataset version to `"0.0.0"` and removes the inherited changelog. It does not edit other metadata or data. See [cleanup safeguards](docs/reference.md#initialize-a-new-dataset).
 3. Replace `input.csv` with your data. List each file or directory resource in `datapackage.json` with a unique `name`, a nonblank `title` and a repository-relative `path`. A directory covers its contents; omit its `format`. Use optional `count` for item totals, not bytes. See [resource rules](docs/reference.md#resource-counts-and-directories).
 4. Replace the package `name` (stable lowercase identifier), `title`, `description` and `keywords`. Both `title` and `description` are required, nonblank text. Include exactly one nonempty `task:<value>`, `project:<value>` and stage keyword (`stage:master`, `stage:curated`, `stage:annotated` or `stage:ground-truth`). Other subject keywords are allowed. See [metadata and stage rules](docs/reference.md#metadata-and-stages).
 5. Replace the example `created` date and `contributors`, or remove them if unknown. Add licences and upstream sources only when available and safe to share. Do not invent metadata or lineage.
@@ -63,7 +63,7 @@ Remove credentials, private paths and sensitive notebook outputs before sharing.
 
 ## 5. Validate, release and catalogue
 
-With Node.js 24+ and pnpm 12.11.2, run from the repository root:
+With Node.js 24+ and pnpm 12.x, run from the repository root:
 
 ```sh
 pnpm install --frozen-lockfile --ignore-scripts
