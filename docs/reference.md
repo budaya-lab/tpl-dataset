@@ -62,7 +62,7 @@ Arrows show possible derivations, not required steps or confirmed lineage. A dat
 `pnpm validate` runs `@lazydata/validator` from a pinned compiled GitHub release
 archive. Code and policy come from the same package; no compiler or sibling
 checkout is needed to run it. TypeScript and Node types check this template's
-consumer/release tests only. See the [Lazydata API and policy](https://github.com/budaya-lab/lazydata/tree/v1.0.0/packages/validator).
+release tests only. See the [Lazydata API and policy](https://github.com/budaya-lab/lazydata/tree/v1.0.0/packages/validator).
 Do not copy shared rules into this repository. Dataset-local `dataset.config.json`
 or `stage.config.json` files cannot override the installed policy.
 

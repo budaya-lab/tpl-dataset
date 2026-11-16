@@ -24,5 +24,5 @@ This repository is both a dataset template and a working template dataset. Read 
 ## Template maintenance
 
 - Keep `input.csv` and descriptor examples unmistakably synthetic; never add real or invented research lineage.
-- Keep only consumer integration and template release checks here; shared rule and portability tests belong in Lazydata. Author tests in TypeScript, discover them with `scripts/*.test.ts` and keep strict typechecking. Test behavior, not source layout. Update setup/reference guidance with dependency changes. Only the validator, TypeScript and Node types are approved development dependencies.
+- Keep only template release tests here; shared validator and portability tests belong in Lazydata. CI's `pnpm validate` checks the actual dataset with the installed validator. Author tests in TypeScript, discover them with `scripts/*.test.ts` and keep strict typechecking. Test behavior, not source layout. Update setup/reference guidance with dependency changes. Only the validator, TypeScript and Node types are approved development dependencies.
 - Template changes affect future repositories only. Existing portal records and separately created repositories are not migrated automatically.

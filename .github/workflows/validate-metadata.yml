@@ -22,9 +22,9 @@ jobs:
           cache: pnpm
       - name: Install pinned validator and test tools
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Typecheck tests
+      - name: Typecheck template tooling
         run: pnpm typecheck
-      - name: Test validator integration
+      - name: Test template tooling
         run: pnpm test
       - name: Validate Data Package
         run: pnpm validate
