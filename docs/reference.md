@@ -61,8 +61,8 @@ Arrows show possible derivations, not required steps or confirmed lineage. A dat
 
 `pnpm validate` runs `@lazydata/validator` from a pinned compiled GitHub release
 archive. Code and policy come from the same package; no compiler or sibling
-checkout is needed to run it. TypeScript and Node types check this template's
-release tests only. See the [Lazydata API and policy](https://github.com/budaya-lab/lazydata/tree/v1.0.0/packages/validator).
+checkout is needed to run it. TypeScript and Node types check the template's
+initialization script and initialization/release tests. See the [Lazydata API and policy](https://github.com/budaya-lab/lazydata/tree/v1.0.0/packages/validator).
 Do not copy shared rules into this repository. Dataset-local `dataset.config.json`
 or `stage.config.json` files cannot override the installed policy.
 
@@ -149,13 +149,37 @@ Portal onboarding reads it from a suitable published SemVer release reachable fr
 
 ## Releases
 
+### Initialize a new dataset
+
+After creating a repository with **Use this template**, fully clone the new
+repository and run this at its root, before making new commits:
+
+```sh
+pnpm init:dataset
+```
+
+This manual command needs Node.js 24+, the pinned pnpm and Git, but no dependency
+installation. It empties `.release-please-manifest.json`, changes only the root
+`datapackage.json` version to `"0.0.0"`, and removes the inherited `CHANGELOG.md`.
+Other descriptor bytes, data, README notes, Git commits and remotes stay unchanged.
+An already-clean repository is a no-op. No prompts or metadata inference are
+included; any future interactive setup must be a separate command.
+
+Cleanup requires a non-template origin, one initial commit, full local history
+and no local tags. It refuses changed release versions/manifests, edited
+changelogs, malformed JSON and linked release files before writing. Do not use it
+to reset an established dataset. File-system failures can leave partial cleanup;
+inspect the release files and fix permissions before retrying. It does not run
+during install, validation or CI; validation remains read-only.
+
 ### Enable releases once per repository
 
 - Require reviewed PRs and the `metadata` check on `main`; restrict direct pushes. Any successful validated push to `main` can trigger release management.
 - Review visibility, consent and access. GitHub's automatic source archives include tracked data; public repositories expose those files. Keep commit subjects and release descriptions public-safe.
 - The workflow uses the built-in `GITHUB_TOKEN` with Contents, Issues and Pull requests write permissions. No extra secret is needed. If policy requires it, allow Actions to create PRs in **Settings → Actions → General**.
 
-For a new dataset, reset `.release-please-manifest.json` to `{}`, set `datapackage.json`'s `version` to `"0.0.0"`, and remove the inherited `CHANGELOG.md`. Keep the version field: the first release PR replaces `"0.0.0"` with `"0.1.0"`.
+Run the [one-time cleanup](#initialize-a-new-dataset) before starting dataset work.
+Keep the version field: the first release PR replaces `"0.0.0"` with `"0.1.0"`.
 
 ### Create a release
 
