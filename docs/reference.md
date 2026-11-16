@@ -11,7 +11,7 @@
 | `name` | Required stable lowercase package identifier. |
 | `title`, `description` | Required nonblank text. |
 | `resources` | Required nonempty array. Each resource needs a unique lowercase `name`, nonblank `title` and local, repository-relative file or directory `path`. Paths must resolve inside the repository. |
-| `keywords` | Exactly one `stage:` keyword; other keywords describe the subject. |
+| `keywords` | Exactly one nonempty `task:`, `project:` and controlled `stage:` keyword. Other nonblank keywords are allowed. |
 | `created` | Optional RFC 3339 date-time, including timezone offsets and fractional seconds. Omit if unknown. |
 | `contributors` | Optional nonempty array of nonempty objects. Supplied `roles` must be a nonempty array of nonblank strings. |
 | `licenses` | Optional nonempty array of objects, each with a nonblank `name` or `path`. Names use letters, digits, dots, underscores or hyphens. |
@@ -25,9 +25,9 @@ not verify licence authority, source availability, full Data Package conformance
 permission to publish. Include only accurate, public-safe metadata; omit unknown values.
 
 Validation never changes files or the supplied descriptor. Counting, repairs and README
-generation belong to downstream tools. Descriptors missing the newly required package
-`title`/`description` or resource `title` will fail; add accurate descriptions before
-validating again. Existing dataset repositories are not updated automatically.
+generation belong to downstream tools. Descriptors missing required titles, description
+or task/project/stage keywords fail. Supply accurate values; do not infer them from
+folder names. Existing dataset repositories are not updated automatically.
 
 Choose the dataset's **primary stage**, not a required sequence:
 
@@ -57,7 +57,30 @@ flowchart LR
 
 Arrows show possible derivations, not required steps or confirmed lineage. A dataset may combine several inputs or processing steps. Document only verified sources and methods; a stage does not establish lineage. Data Package `sources[]` and the portal's `derivedFrom` catalogue links are separate. Onboarding does not infer parent links.
 
-[`stage.config.json`](../stage.config.json) defines allowed stages and display labels. Coordinate changes with the portal configuration before publishing records.
+### Validation dependency
+
+`pnpm validate` runs `@lazydata/validator` from a pinned compiled GitHub release
+archive. Code and policy come from the same package; no compiler or sibling
+checkout is needed to run it. TypeScript and Node types check the template's
+initialization script and initialization/release tests. See the [Lazydata API and policy](https://github.com/budaya-lab/lazydata/tree/v1.0.0/packages/validator).
+Do not copy shared rules into this repository. Dataset-local `dataset.config.json`
+or `stage.config.json` files cannot override the installed policy.
+
+To upgrade:
+
+1. Review the Lazydata release, policy changes and Node requirements. Choose a
+   release with `lazydata-validator-VERSION.tgz`, not a generated source archive.
+2. Update the exact release URL in `package.json`, then run
+   `pnpm install --ignore-scripts` to update `pnpm-lock.yaml`. Preserve normal
+   lockfile integrity; never use moving branches or overwrite a release asset.
+3. Run the [setup checks](../README.md#5-validate-release-and-catalogue) and
+   `pnpm audit --audit-level=high`, then submit the manifest and lockfile together
+   for review. Keep lifecycle scripts disabled through `pnpm-workspace.yaml`.
+
+When migrating an existing dataset, remove its old validator scripts and local
+policy files, and add accurate task/project/stage keywords if missing. Do not
+infer metadata. This template change does not migrate other repositories or
+publish portal records.
 
 ## Resource counts and directories
 
@@ -126,13 +149,37 @@ Portal onboarding reads it from a suitable published SemVer release reachable fr
 
 ## Releases
 
+### Initialize a new dataset
+
+After creating a repository with **Use this template**, fully clone the new
+repository and run this at its root, before making new commits:
+
+```sh
+pnpm init:dataset
+```
+
+This manual command needs Node.js 24+, the pinned pnpm and Git, but no dependency
+installation. It empties `.release-please-manifest.json`, changes only the root
+`datapackage.json` version to `"0.0.0"`, and removes the inherited `CHANGELOG.md`.
+Other descriptor bytes, data, README notes, Git commits and remotes stay unchanged.
+An already-clean repository is a no-op. No prompts or metadata inference are
+included; any future interactive setup must be a separate command.
+
+Cleanup requires a non-template origin, one initial commit, full local history
+and no local tags. It refuses changed release versions/manifests, edited
+changelogs, malformed JSON and linked release files before writing. Do not use it
+to reset an established dataset. File-system failures can leave partial cleanup;
+inspect the release files and fix permissions before retrying. It does not run
+during install, validation or CI; validation remains read-only.
+
 ### Enable releases once per repository
 
 - Require reviewed PRs and the `metadata` check on `main`; restrict direct pushes. Any successful validated push to `main` can trigger release management.
 - Review visibility, consent and access. GitHub's automatic source archives include tracked data; public repositories expose those files. Keep commit subjects and release descriptions public-safe.
 - The workflow uses the built-in `GITHUB_TOKEN` with Contents, Issues and Pull requests write permissions. No extra secret is needed. If policy requires it, allow Actions to create PRs in **Settings → Actions → General**.
 
-For a new dataset, reset `.release-please-manifest.json` to `{}`, set `datapackage.json`'s `version` to `"0.0.0"`, and remove the inherited `CHANGELOG.md`. Keep the version field: the first release PR replaces `"0.0.0"` with `"0.1.0"`.
+Run the [one-time cleanup](#initialize-a-new-dataset) before starting dataset work.
+Keep the version field: the first release PR replaces `"0.0.0"` with `"0.1.0"`.
 
 ### Create a release
 

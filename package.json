@@ -1,0 +1,20 @@
+{
+  "name": "dataset-validation",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "init:dataset": "node scripts/init-dataset.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test scripts/*.test.ts",
+    "validate": "lazydata-validate"
+  },
+  "devDependencies": {
+    "@lazydata/validator": "https://github.com/budaya-lab/lazydata/releases/download/v1.0.0/lazydata-validator-1.0.0.tgz",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}
