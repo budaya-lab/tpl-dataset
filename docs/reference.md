@@ -59,17 +59,21 @@ Arrows show possible derivations, not required steps or confirmed lineage. A dat
 
 ### Validation dependency
 
-`pnpm validate` runs `@lazydata/validator` from a pinned compiled GitHub release
+`pnpm validate` runs `penjaga-validate` from the pinned compiled
+`@penjaga/validator` v2.0.0 GitHub release
 archive. Code and policy come from the same package; no compiler or sibling
 checkout is needed to run it. TypeScript and Node types check the template's
-initialization script and initialization/release tests. See the [Lazydata API and policy](https://github.com/budaya-lab/lazydata/tree/v1.0.0/packages/validator).
+initialization script and initialization/release tests. See the [Penjaga API and policy](https://github.com/budaya-lab/penjaga/tree/v2.0.0/packages/validator).
+The template uses the published `penjaga-validator-2.0.0.tgz` archive, not a source
+checkout or an unreleased package.
 Do not copy shared rules into this repository. Dataset-local `dataset.config.json`
 or `stage.config.json` files cannot override the installed policy.
 
 To upgrade:
 
-1. Review the Lazydata release, policy changes and Node requirements. Choose a
-   release with `lazydata-validator-VERSION.tgz`, not a generated source archive.
+1. Review the Penjaga release, policy changes and Node requirements. Choose its
+   actual compiled `penjaga-validator-VERSION.tgz`, not a generated source archive.
+   Keep package imports and CLI calls aligned with the selected release.
 2. Update the exact release URL in `package.json`, then run
    `pnpm install --ignore-scripts` to update `pnpm-lock.yaml`. Preserve normal
    lockfile integrity; never use moving branches or overwrite a release asset.
