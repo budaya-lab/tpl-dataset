@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@penjaga/validator':
-        specifier: https://github.com/budaya-lab/penjaga/releases/download/v3.2.0/penjaga-validator-3.2.0.tgz
-        version: https://github.com/budaya-lab/penjaga/releases/download/v3.2.0/penjaga-validator-3.2.0.tgz
+        specifier: https://github.com/budaya-lab/penjaga/releases/download/v3.3.0/penjaga-validator-3.3.0.tgz
+        version: https://github.com/budaya-lab/penjaga/releases/download/v3.3.0/penjaga-validator-3.3.0.tgz
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
@@ -20,9 +20,9 @@ importers:
 
 packages:
 
-  '@penjaga/validator@https://github.com/budaya-lab/penjaga/releases/download/v3.2.0/penjaga-validator-3.2.0.tgz':
-    resolution: {integrity: sha512-+sCu/q2O4bBUuSVJ/sKndEqZ34zFSoHDqlhHVOmbLmAmFK0nuL7bAhL60gR0sYxmt/N+2e7G83fn4O9dGbMPsQ==, tarball: https://github.com/budaya-lab/penjaga/releases/download/v3.2.0/penjaga-validator-3.2.0.tgz}
-    version: 3.2.0
+  '@penjaga/validator@https://github.com/budaya-lab/penjaga/releases/download/v3.3.0/penjaga-validator-3.3.0.tgz':
+    resolution: {integrity: sha512-2P7piNESDPFBfw3MY470Evi/v0mD68wci4BnAcH4aIT1qdcomp8GSdTuC/n1/k9H0anSUk1dF0Xizr1s/6E88A==, tarball: https://github.com/budaya-lab/penjaga/releases/download/v3.3.0/penjaga-validator-3.3.0.tgz}
+    version: 3.3.0
     engines: {node: '>=24'}
     hasBin: true
 
@@ -159,7 +159,7 @@ packages:
 
 snapshots:
 
-  '@penjaga/validator@https://github.com/budaya-lab/penjaga/releases/download/v3.2.0/penjaga-validator-3.2.0.tgz': {}
+  '@penjaga/validator@https://github.com/budaya-lab/penjaga/releases/download/v3.3.0/penjaga-validator-3.3.0.tgz': {}
 
   '@types/node@24.19.2':
     dependencies:
