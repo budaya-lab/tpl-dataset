@@ -13,7 +13,7 @@
     "validate": "penjaga-validate"
   },
   "devDependencies": {
-    "@penjaga/validator": "https://github.com/budaya-lab/penjaga/releases/download/v2.0.0/penjaga-validator-2.0.0.tgz",
+    "@penjaga/validator": "https://github.com/budaya-lab/penjaga/releases/download/v3.2.0/penjaga-validator-3.2.0.tgz",
     "@types/node": "24.19.2",
     "typescript": "7.0.2"
   }

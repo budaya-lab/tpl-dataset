@@ -1,0 +1,97 @@
+name: Update Penjaga validator
+
+on:
+  schedule:
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - name: Check latest Penjaga release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release="$(gh api repos/budaya-lab/penjaga/releases/latest)"
+          tag="$(jq -r '.tag_name' <<< "$release")"
+          version="${tag#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unexpected Penjaga release tag: $tag" >&2
+            exit 1
+          fi
+          asset="penjaga-validator-${version}.tgz"
+          url="https://github.com/budaya-lab/penjaga/releases/download/${tag}/${asset}"
+          if ! jq -e --arg asset "$asset" '.assets | any(.name == $asset)' <<< "$release" >/dev/null; then
+            echo "Release $tag has no compiled validator asset $asset" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Update exact release pin
+        env:
+          URL: ${{ steps.release.outputs.url }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const path = 'package.json';
+          const pkg = JSON.parse(readFileSync(path, 'utf8'));
+          const current = pkg.devDependencies['@penjaga/validator'];
+          if (current !== process.env.URL) {
+            pkg.devDependencies['@penjaga/validator'] = process.env.URL;
+            writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
+          }
+          NODE
+          pnpm install --lockfile-only --ignore-scripts
+      - name: Check for updates
+        id: changes
+        run: |
+          if git diff --quiet -- package.json pnpm-lock.yaml; then
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install pinned dependencies
+        if: steps.changes.outputs.updated == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Typecheck template tooling
+        if: steps.changes.outputs.updated == 'true'
+        run: pnpm typecheck
+      - name: Test template tooling
+        if: steps.changes.outputs.updated == 'true'
+        run: pnpm test
+      - name: Validate Data Package
+        if: steps.changes.outputs.updated == 'true'
+        run: pnpm validate
+      - name: Audit dependencies
+        if: steps.changes.outputs.updated == 'true'
+        run: pnpm audit --audit-level=high
+      - name: Open update pull request
+        if: steps.changes.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ github.token }}
+          branch: chore/update-penjaga-validator
+          delete-branch: true
+          commit-message: "chore(deps): update Penjaga validator"
+          title: "chore(deps): update Penjaga validator"
+          body: |
+            Updates the pinned compiled Penjaga validator to the latest stable release.
+
+            The template checks passed against the updated release before this pull request was opened. As this PR uses `GITHUB_TOKEN`, GitHub will not automatically start the required validation workflow for the PR; manually run **Validate metadata** on this branch before merging.
+          add-paths: |
+            package.json
+            pnpm-lock.yaml
