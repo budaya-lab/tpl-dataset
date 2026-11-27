@@ -74,6 +74,6 @@ pnpm validate
 
 Fix errors, then open a PR to `main`. Require review and the **Validate metadata** check (`metadata`) before merging. Validation is read-only: it never changes files or the supplied descriptor. It checks required metadata, supplied optional metadata, local paths and optional bucket summaries—not full Data Package conformance, other data contents or permission to publish.
 
-[Penjaga v2.0.0](https://github.com/budaya-lab/penjaga/releases/tag/v2.0.0) supplies the compiled `@penjaga/validator` package and matched policy. This template pins its release archive and lockfile; `pnpm validate` runs `penjaga-validate`, and dataset-local policy is not used. See [dependency updates](docs/reference.md#validation-dependency).
+Penjaga supplies the compiled `@penjaga/validator` package and matched policy. This template pins a reviewed release archive and lockfile; `pnpm validate` runs `penjaga-validate`, and dataset-local policy is not used. See [dependency updates](docs/reference.md#validation-dependency).
 
 For a versioned release, follow the [release guide](docs/reference.md#releases). Then follow the [Data Portal onboarding guide](https://github.com/budaya-lab/data-portal#add-a-dataset) to review and add a catalogue record. **A GitHub release does not automatically publish a catalogue entry.**

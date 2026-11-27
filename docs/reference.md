@@ -59,13 +59,13 @@ Arrows show possible derivations, not required steps or confirmed lineage. A dat
 
 ### Validation dependency
 
-`pnpm validate` runs `penjaga-validate` from the pinned compiled
-`@penjaga/validator` v2.0.0 GitHub release
-archive. Code and policy come from the same package; no compiler or sibling
-checkout is needed to run it. TypeScript and Node types check the template's
-initialization script and initialization/release tests. See the [Penjaga API and policy](https://github.com/budaya-lab/penjaga/tree/v2.0.0/packages/validator).
-The template uses the published `penjaga-validator-2.0.0.tgz` archive, not a source
-checkout or an unreleased package.
+`pnpm validate` runs `penjaga-validate` from the exact pinned compiled
+`@penjaga/validator` GitHub release archive. Code and policy come from the same
+package; no compiler or sibling checkout is needed to run it. TypeScript and
+Node types check the template's initialization script and initialization/release
+tests. See the [Penjaga API and policy](https://github.com/budaya-lab/penjaga/tree/main/packages/validator).
+The template uses a published release asset, not a source checkout or an
+unreleased package.
 Do not copy shared rules into this repository. Dataset-local `dataset.config.json`
 or `stage.config.json` files cannot override the installed policy.
 
